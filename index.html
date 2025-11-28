@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBTI 기반 날씨별 옷 추천</title>
+    <style>
+        /* CSS 스타일 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-group label {
+            width: 120px; /* 라벨 너비 고정 */
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .input-group input, .input-group select {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .action-area {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        #result-area {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px dashed #3498db;
+            border-radius: 8px;
+            min-height: 100px;
+            background-color: #ecf0f1;
+            white-space: pre-wrap;
+        }
+
+        #result-area h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ MBTI & 날씨 옷 추천 입력</h1>
+        
+        <div class="input-group">
+            <label for="mbti">MBTI:</label>
+            <input type="text" id="mbti" placeholder="예: INFP, ESTJ" maxlength="4">
+        </div>
+
+        <div class="input-group">
+            <label for="gender">성별:</label>
+            <select id="gender">
+                <option value="">선택하세요</option>
+                <option value="male">남성</option>
+                <option value="female">여성</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="weather">날씨:</label>
+            <input type="text" id="weather" placeholder="예: 맑음, 비, 눈">
+        </div>
+
+        <div class="input-group">
+            <label for="temp-max">최고 기온 (℃):</label>
+            <input type="number" id="temp-max" placeholder="예: 28">
+        </div>
+
+        <div class="input-group">
+            <label for="temp-min">최저 기온 (℃):</label>
+            <input type="number" id="temp-min" placeholder="예: 15">
+        </div>
+
+        <div class="input-group">
+            <label for="style">평소 스타일:</label>
+            <input type="text" id="style" placeholder="예: 캐주얼, 미니멀, 스트릿">
+        </div>
+
+        <div class="action-area">
+            <button onclick="register()">옷 추천받기</button>
+        </div>
+        
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <div id="result-area">
+            <h3>💌 추천 결과</h3>
+            결과가 여기에 표시됩니다.
+        </div>
+    </div>
+
+    <script>
+        // JavaScript 로직
+
+        /**
+         * ⚠️ API 서버의 주소를 담는 상수
+         * 현재는 빈 문자열로 설정되어 있어 통신 시 오류가 발생합니다.
+         * 백엔드 서버 주소를 이곳에 입력하여 연결하십시오.
+         */
+        const SERVER_URL = ""; 
+
+        /**
+         * 입력 필드의 데이터를 모아 서버에 전송하고 결과를 처리하는 함수입니다.
+         * 요청하신 fetch 함수 구조(method: 'POST', JSON.stringify)를 따릅니다.
+         */
+        async function register() {
+            const resultArea = document.getElementById('result-area');
+            resultArea.innerHTML = "<h3>💌 추천 결과</h3>서버에 요청 중입니다...";
+
+            // 1. 입력 필드에서 데이터 수집
+            const mbti = document.getElementById('mbti').value.toUpperCase();
+            const gender = document.getElementById('gender').value;
+            const weather = document.getElementById('weather').value;
+            const tempMax = document.getElementById('temp-max').value;
+            const tempMin = document.getElementById('temp-min').value;
+            const style = document.getElementById('style').value;
+
+            // 2. 입력 데이터 유효성 검사 (간단한 예시)
+            if (!mbti || !gender || !weather || !tempMax || !tempMin || !style) {
+                resultArea.innerHTML = "<h3>💌 추천 결과</h3>⚠️ 모든 입력 필드를 채워주세요.";
+                return;
+            }
+
+            // 3. 서버에 전송할 데이터 객체 생성
+            const requestData = {
+                mbti: mbti,
+                gender: gender,
+                weather: weather,
+                temp_max: parseFloat(tempMax), // 숫자로 변환
+                temp_min: parseFloat(tempMin), // 숫자로 변환
+                style: style
+            };
+
+            // 4. fetch 함수를 이용한 서버 통신 (요청 구조 준수)
+            try {
+                if (SERVER_URL === "") {
+                     throw new Error("SERVER_URL이 비어 있습니다. 백엔드 주소를 설정해야 통신이 가능합니다.");
+                }
+
+                const response = await fetch(SERVER_URL, {
+                    method: 'POST', // 통신 방식: method: 'POST'
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    // JSON 데이터: 입력 필드의 데이터를 모아 JSON 형태로 서버에 전송
+                    body: JSON.stringify(requestData) 
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // 5. 서버로부터 받은 추천 결과를 화면에 표시
+                resultArea.innerHTML = `
+                    <h3>✅ 추천 결과</h3>
+                    <p><strong>MBTI:</strong> ${result.mbti}</p>
+                    <p><strong>날씨:</strong> ${result.weather} (최고 ${result.temp_max}°C / 최저 ${result.temp_min}°C)</p>
+                    <hr>
+                    <p style="font-size: 1.1em; color: #e74c3c;"><strong>오늘의 추천 코디:</strong></p>
+                    <p style="font-weight: bold;">${result.recommendation || "추천 정보를 받아오지 못했습니다."}</p>
+                `;
+
+            } catch (error) {
+                // 6. 통신 오류 처리 (현재는 SERVER_URL이 비어있어 이 블록이 실행됨)
+                console.error("Fetch Error:", error);
+
+                // 서버 통신이 성공했을 때 받을 응답 데이터의 구조를 가정하여 미리 출력합니다.
+                const mockResponse = {
+                    mbti: mbti,
+                    weather: weather,
+                    temp_max: tempMax,
+                    temp_min: tempMin,
+                    recommendation: `[통신 오류] 서버 연결이 필요합니다. (에러: ${error.message})\n\n[예상 응답]: ${mbti}의 ${gender}인 당신에게는 ${tempMin}°C ~ ${tempMax}°C 날씨에 ${style} 스타일을 고려하여 '가벼운 니트, 트렌치 코트, 그리고 데님 팬츠'를 추천합니다.`
+                };
+
+                resultArea.innerHTML = `
+                    <h3>❌ 통신 오류 발생</h3>
+                    <p style="color: #e74c3c; font-weight: bold;">${error.message}</p>
+                    <hr>
+                    <p style="font-weight: bold;">[데이터 전송 성공 확인]</p>
+                    <p>서버로 전송하려던 데이터: ${JSON.stringify(requestData, null, 2)}</p>
+                    <hr>
+                    <p style="font-weight: bold;">[임시 추천 결과 (프론트엔드 테스트)]</p>
+                    <pre style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">${mockResponse.recommendation}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
