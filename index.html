@@ -73,8 +73,8 @@
     </div>
 
     <script>
-        // ✅ 포트 8000을 포함한 새로운 백엔드 주소로 변경
-        const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev:8000/recommend_outfit'; 
+        // ✅ 포트 8000을 제거한 백엔드 주소로 변경 (Replit 권장 방식)
+        const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev/recommend_outfit'; 
 
         async function register() {
             const resultArea = document.getElementById('result-area');
@@ -109,13 +109,14 @@
                 });
 
                 if (!response.ok) {
-                    // HTTP 502, 404, 400 등의 오류 처리
+                    // HTTP 500 (API 할당량 초과 포함) 등의 오류 처리
                     let errorMessage = `HTTP error! status: ${response.status}`;
                     try {
                         const errorJson = await response.json();
+                        // 429 RESOURCE_EXHAUSTED와 같은 상세 오류 메시지를 표시
                         if (errorJson.detail) errorMessage += ` (Detail: ${errorJson.detail})`;
                     } catch (e) {
-                        // JSON 응답이 아닐 경우 무시
+                        // JSON 응답이 아닐 경우 (예: 502 Bad Gateway)
                     }
                     throw new Error(errorMessage);
                 }
@@ -149,6 +150,5 @@
     </script>
 </body>
 </html>
-
 
 
