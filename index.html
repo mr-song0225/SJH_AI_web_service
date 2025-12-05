@@ -73,8 +73,8 @@
     </div>
 
     <script>
-        // ✅ 올바른 백엔드 주소 (https 확인 완료)
-        const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev/recommend_outfit'; 
+        // ✅ 포트 8000을 포함한 새로운 백엔드 주소로 변경
+        const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev:8000/recommend_outfit'; 
 
         async function register() {
             const resultArea = document.getElementById('result-area');
@@ -109,13 +109,20 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    // HTTP 502, 404, 400 등의 오류 처리
+                    let errorMessage = `HTTP error! status: ${response.status}`;
+                    try {
+                        const errorJson = await response.json();
+                        if (errorJson.detail) errorMessage += ` (Detail: ${errorJson.detail})`;
+                    } catch (e) {
+                        // JSON 응답이 아닐 경우 무시
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
                 
-                // ✅ 결과 표시 로직 수정 (백엔드 데이터 구조 반영)
-                // result.ai_result.recommendation은 배열이므로 join으로 묶어줍니다.
+                // ✅ 결과 표시 로직
                 const clothes = result.ai_result.recommendation.join(', ');
 
                 resultArea.innerHTML = `
@@ -142,8 +149,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
