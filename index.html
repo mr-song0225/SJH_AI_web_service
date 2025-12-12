@@ -73,7 +73,7 @@
     </div>
 
     <script>
-        // ✅ 포트 8000을 제거한 백엔드 주소로 변경 (Replit 권장 방식)
+        // ✅ Replit 서버 URL (포트 8000 제거됨)
         const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev/recommend_outfit'; 
 
         async function register() {
@@ -143,7 +143,7 @@
                 resultArea.innerHTML = `
                     <h3>❌ 통신 오류 발생</h3>
                     <p style="color: #e74c3c;">${error.message}</p>
-                    <p>Replit 웹뷰 주소와 서버 주소 간의 통신이 차단되었을 수 있습니다.</p>
+                    <p>Replit 웹뷰 주소와 서버 주소 간의 통신이 차단되었을 수 있습니다. (서버가 실행 중인지 확인해 주세요.)</p>
                 `;
             }
         }
