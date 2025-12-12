@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MBTI 기반 날씨별 옷 추천</title>
+    <title>MBTI 기반 날씨별 옷 추천 (AI 웹 서비스)</title>
     <style>
         /* CSS 스타일 */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
@@ -19,6 +19,9 @@
         button:active { transform: scale(0.98); }
         #result-area { margin-top: 30px; padding: 20px; border: 1px dashed #3498db; border-radius: 8px; min-height: 100px; background-color: #ecf0f1; white-space: pre-wrap; }
         #result-area h3 { margin-top: 0; color: #2c3e50; }
+        /* 로딩 스피너를 위한 CSS 추가 */
+        .loading-spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin-left: 10px; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -34,8 +37,8 @@
             <label for="gender">성별:</label>
             <select id="gender">
                 <option value="">선택하세요</option>
-                <option value="male">남성</option>
-                <option value="female">여성</option>
+                <option value="남성">남성</option>
+                <option value="여성">여성</option>
             </select>
         </div>
 
@@ -60,7 +63,7 @@
         </div>
 
         <div class="action-area">
-            <button onclick="register()">옷 추천받기</button>
+            <button onclick="requestOutfitRecommendation()">옷 추천받기</button>
         </div>
         
     </div>
@@ -73,13 +76,22 @@
     </div>
 
     <script>
-        // ✅ Replit 서버 URL (포트 8000 제거됨)
-        const SERVER_URL = 'https://37f81b4a-14ad-4e36-8378-e8697db2c00f-00-28jqdlsfizo1a.pike.replit.dev/recommend_outfit'; 
+        // **********************************************
+        // ✅ 고정 규칙 3)에 따라 통신 규격을 맞춘 JavaScript
+        // **********************************************
 
-        async function register() {
+        // ⚠️ 주의: 반드시 본인의 백엔드 서비스 URL로 변경해야 합니다.
+        // 현재는 서버가 실행될 로컬 개발 환경 주소로 설정합니다. (FastAPI 기본 주소)
+        const BACKEND_BASE_URL = 'http://127.0.0.1:8000'; 
+        
+        // 고정 요청 주소: BACKEND_BASE_URL + "/ai"
+        const REQUEST_URL = BACKEND_BASE_URL + "/ai"; 
+
+        async function requestOutfitRecommendation() {
             const resultArea = document.getElementById('result-area');
-            resultArea.innerHTML = "<h3>💌 추천 결과</h3>AI가 코디를 고민 중입니다... 잠시만 기다려주세요! 🤖";
+            resultArea.innerHTML = '<h3>💌 추천 결과</h3>AI가 코디를 고민 중입니다... 잠시만 기다려주세요! <span class="loading-spinner"></span>';
 
+            // 1. HTML 입력값 가져오기
             const mbti = document.getElementById('mbti').value.toUpperCase();
             const gender = document.getElementById('gender').value;
             const weather = document.getElementById('weather').value;
@@ -92,7 +104,8 @@
                 return;
             }
 
-            const requestData = {
+            // 2. 고정 규칙 1)에 따라 모든 입력값을 'inputs' 객체로 만들기
+            const inputs = {
                 mbti: mbti,
                 gender: gender,
                 weather: weather,
@@ -101,54 +114,53 @@
                 style: style
             };
 
+            // 3. 고정 규칙 3)에 따라 요청 Body 구성
+            const requestBody = {
+                "inputs": inputs
+            };
+
             try {
-                const response = await fetch(SERVER_URL, {
+                // 4. 고정 규칙 3)에 따라 POST 요청
+                const response = await fetch(REQUEST_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestData) 
+                    body: JSON.stringify(requestBody) 
                 });
 
                 if (!response.ok) {
-                    // HTTP 500 (API 할당량 초과 포함) 등의 오류 처리
-                    let errorMessage = `HTTP error! status: ${response.status}`;
+                    // 오류 상세 정보 포함하여 오류 메시지 생성
+                    let errorMessage = `HTTP 오류! 상태 코드: ${response.status}`;
                     try {
                         const errorJson = await response.json();
-                        // 429 RESOURCE_EXHAUSTED와 같은 상세 오류 메시지를 표시
-                        if (errorJson.detail) errorMessage += ` (Detail: ${errorJson.detail})`;
+                        if (errorJson.detail) errorMessage += ` (상세: ${JSON.stringify(errorJson.detail)})`;
                     } catch (e) {
-                        // JSON 응답이 아닐 경우 (예: 502 Bad Gateway)
+                        errorMessage += " (서버에서 JSON 응답을 받지 못했습니다.)";
                     }
                     throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
                 
-                // ✅ 결과 표시 로직
-                const clothes = result.ai_result.recommendation.join(', ');
+                // 5. 고정 규칙 3)에 따라 응답 body의 "answer" 값만 사용
+                const aiAnswer = result.answer;
 
+                // 6. 결과 표시 로직
+                // answer 변수에는 AI가 만들어 준 최종 결과 텍스트가 담겨있습니다.
                 resultArea.innerHTML = `
-                    <h3>✅ ${result.ai_result.outfit_name}</h3>
-                    <p><strong>MBTI:</strong> ${result.mbti}</p>
-                    <p><strong>날씨:</strong> ${result.weather} (최고 ${result.temp_max}°C / 최저 ${result.temp_min}°C)</p>
-                    <hr>
-                    <p style="font-size: 1.1em; color: #3498db;"><strong>👕 추천 코디 아이템:</strong></p>
-                    <p style="font-weight: bold; font-size: 1.2em;">${clothes}</p>
-                    <br>
-                    <p><strong>💡 추천 이유:</strong> ${result.ai_result.reasoning}</p>
-                    <p><strong>🌡️ 기온 팁:</strong> ${result.ai_result.temperature_guide}</p>
+                    <h3>✅ AI 추천 코디 완성</h3>
+                    <p style="white-space: pre-wrap;">${aiAnswer}</p>
+                    <p style="font-size: 0.9em; color: #7f8c8d; margin-top: 15px;">(결과는 백엔드에서 생성된 프롬프트를 통해 Gemini가 생성했습니다.)</p>
                 `;
 
             } catch (error) {
-                console.error("Fetch Error:", error);
+                console.error("통신 오류:", error);
                 resultArea.innerHTML = `
                     <h3>❌ 통신 오류 발생</h3>
-                    <p style="color: #e74c3c;">${error.message}</p>
-                    <p>Replit 웹뷰 주소와 서버 주소 간의 통신이 차단되었을 수 있습니다. (서버가 실행 중인지 확인해 주세요.)</p>
+                    <p style="color: #e74c3c;">**오류 메시지:** ${error.message}</p>
+                    <p>백엔드 서버(main.py)가 실행 중인지, URL이 올바른지 확인해 주세요.</p>
                 `;
             }
         }
     </script>
 </body>
 </html>
-
-
